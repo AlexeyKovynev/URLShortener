@@ -30,16 +30,16 @@ import name.javalex.apijson.app.urlshortener.urlEntity.RequestData;
 
 public class MainActivity extends AppCompatActivity implements View.OnClickListener{
 
-    ClipData clip;
+    public String id = "";
 
     private String pasteText = "http://stackoverflow.com/search?q=URL+Shortener+api+java";
     private String targetText = "";
     private TextView resultTextView;
     private EditText targetEditText;
-    private final static String REQUEST_URL = "https://www.googleapis.com/urlshortener/v1/url?key=hohoho";
-    public String id = "";
+    private final static String REQUEST_URL = "https://www.googleapis.com/urlshortener/v1/url?key=iwon'ttellyouthekey";
 
     Gson gson;
+    ClipData clip;
 
     ClipboardManager clipboard;
     RequestData requestData;
@@ -105,7 +105,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             break;
             case R.id.btnCopy: {
                 if (id.startsWith("http")) {
-                    Log.e("!!!!!!!!!!!!!!!!!!!!!! ", id);
                     clip = ClipData.newPlainText("text", id);
                     Log.e("Buffer data: ", getResultTextView().toString());
                     clipboard.setPrimaryClip(clip);
