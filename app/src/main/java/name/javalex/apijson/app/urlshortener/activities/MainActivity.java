@@ -31,7 +31,6 @@ import name.javalex.apijson.app.urlshortener.urlEntity.RequestData;
 public class MainActivity extends AppCompatActivity implements View.OnClickListener{
 
     public String id = "";
-
     private String pasteText = "http://stackoverflow.com/search?q=URL+Shortener+api+java";
     private String targetText = "";
     private TextView resultTextView;
