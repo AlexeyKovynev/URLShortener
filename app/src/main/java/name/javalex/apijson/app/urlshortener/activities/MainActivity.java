@@ -35,7 +35,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private String targetText = "";
     private TextView resultTextView;
     private EditText targetEditText;
-    private final static String REQUEST_URL = "https://www.googleapis.com/urlshortener/v1/url?key=iwon'ttellyouthekey";
+    private final static String REQUEST_URL = "https://www.googleapis.com/urlshortener/v1/url?key=AIzaSyDUs8hh8hN9gBm9Cqwg2EUSJ-GCcezGcKE";
 
     Gson gson;
     ClipData clip;
