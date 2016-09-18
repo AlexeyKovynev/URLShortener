@@ -43,12 +43,12 @@
                 android:layout_width="251dp"
                 android:layout_height="140dp"
                 android:id="@+id/editTextTargetUrl"
-                android:editable="true"
                 android:focusable="true"
                 android:enabled="true"
                 android:hint="Type URL here or paste from clipboard"
                 android:clickable="true"
-                android:gravity="top|left" />
+                android:gravity="top|left"
+                android:inputType="textMultiLine|textNoSuggestions" />
 
             <Button
                 android:layout_width="match_parent"
@@ -76,20 +76,6 @@
             android:orientation="horizontal"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:gravity="left|center_horizontal" >
-
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:textAppearance="?android:attr/textAppearanceSmall"
-                android:text="Result:"
-                android:id="@+id/textViewBottomTitle" />
-        </LinearLayout>
-
-        <LinearLayout
-            android:orientation="horizontal"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
             android:gravity="center_horizontal"
             android:weightSum="1">
 
@@ -100,15 +86,16 @@
                 android:id="@+id/textViewResult"
                 android:linksClickable="true"
                 android:textIsSelectable="true"
-                android:layout_weight="1" />
+                android:layout_weight="1"
+                android:paddingTop="8dp"
+                android:paddingBottom="8dp"/>
 
         </LinearLayout>
 
         <LinearLayout
             android:orientation="horizontal"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:weightSum="1">
+            android:layout_height="wrap_content">
 
             <LinearLayout
                 android:orientation="vertical"
@@ -117,35 +104,41 @@
 
                 <ImageButton
                     android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
+                    android:layout_height="match_parent"
                     android:id="@+id/btnGetQR"
                     android:src="@drawable/qrcode"
-                    android:layout_gravity="center_vertical"
-                    android:layout_weight="1" />
+                    android:layout_marginRight="8dp"/>
+
             </LinearLayout>
 
             <LinearLayout
                 android:orientation="vertical"
-                android:layout_width="wrap_content"
-                android:layout_height="match_parent"
-                android:layout_weight="1" >
+                android:layout_width="match_parent"
+                android:layout_height="match_parent">
 
                 <Button
                     android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
+                    android:layout_height="match_parent"
                     android:id="@+id/btnCopy"
                     android:text="Copy"
-                    android:layout_weight="1"
-                    android:layout_gravity="center_vertical" />
+                    />
             </LinearLayout>
 
 
         </LinearLayout>
 
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textAppearance="?android:attr/textAppearanceMedium"
+            android:id="@+id/textViewQRWaiting" />
+
         <ScrollView
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:id="@+id/scrollView" />
+            android:id="@+id/scrollView" >
+
+        </ScrollView>
 
     </LinearLayout>
 
