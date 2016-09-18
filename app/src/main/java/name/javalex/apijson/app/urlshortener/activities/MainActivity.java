@@ -39,7 +39,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     Gson gson;
     ClipData clip;
-
     ClipboardManager clipboard;
     RequestData requestData;
 

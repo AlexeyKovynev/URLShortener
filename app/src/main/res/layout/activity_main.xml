@@ -91,8 +91,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:gravity="center_horizontal"
-            android:weightSum="1"
-            android:layout_weight="0.06">
+            android:weightSum="1">
 
             <TextView
                 android:layout_width="match_parent"
@@ -100,7 +99,8 @@
                 android:textAppearance="?android:attr/textAppearanceLarge"
                 android:id="@+id/textViewResult"
                 android:linksClickable="true"
-                android:textIsSelectable="true" />
+                android:textIsSelectable="true"
+                android:layout_weight="1" />
 
         </LinearLayout>
 
@@ -108,15 +108,44 @@
             android:orientation="horizontal"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:gravity="center_horizontal"
-            android:weightSum="1" >
+            android:weightSum="1">
 
-            <Button
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:id="@+id/btnCopy"
-                android:text="Copy" />
+            <LinearLayout
+                android:orientation="vertical"
+                android:layout_width="wrap_content"
+                android:layout_height="match_parent">
+
+                <ImageButton
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:id="@+id/btnGetQR"
+                    android:src="@drawable/qrcode"
+                    android:layout_gravity="center_vertical"
+                    android:layout_weight="1" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:orientation="vertical"
+                android:layout_width="wrap_content"
+                android:layout_height="match_parent"
+                android:layout_weight="1" >
+
+                <Button
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:id="@+id/btnCopy"
+                    android:text="Copy"
+                    android:layout_weight="1"
+                    android:layout_gravity="center_vertical" />
+            </LinearLayout>
+
+
         </LinearLayout>
+
+        <ScrollView
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:id="@+id/scrollView" />
 
     </LinearLayout>
 
