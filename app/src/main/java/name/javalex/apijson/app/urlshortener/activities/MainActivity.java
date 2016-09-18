@@ -245,7 +245,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 setResultTextView("");
             }
         });
-
     }
 
 
@@ -280,7 +279,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             } catch (IOException e) {
                 e.printStackTrace();
             }
-
             return null;
         }
 
@@ -300,8 +298,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             dialog.show();
             img.setImageBitmap(bitmap);
             getQRbtn.setVisibility(View.VISIBLE);
-
-
         }
     }
 
@@ -321,9 +317,5 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         if (!(dialog == null)) {
             dialog.dismiss();
         }
-
-    }
-    public void saveToDataBase() {
-
     }
 }
