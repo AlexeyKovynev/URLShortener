@@ -5,6 +5,7 @@ import android.content.ClipData;
 import android.content.ClipDescription;
 import android.content.ClipboardManager;
 import android.content.Context;
+import android.database.sqlite.SQLiteDatabase;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.net.ConnectivityManager;
@@ -13,6 +14,7 @@ import android.os.AsyncTask;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.text.TextUtils;
+import android.util.Log;
 import android.view.View;
 import android.view.WindowManager;
 import android.widget.Button;
@@ -44,21 +46,22 @@ import cz.msebera.android.httpclient.entity.ByteArrayEntity;
 import cz.msebera.android.httpclient.message.BasicHeader;
 import cz.msebera.android.httpclient.protocol.HTTP;
 import name.javalex.apijson.app.urlshortener.R;
+import name.javalex.apijson.app.urlshortener.helpers.DBHelper;
 import name.javalex.apijson.app.urlshortener.urlEntity.RequestData;
 
 public class MainActivity extends AppCompatActivity implements View.OnClickListener {
 
-    public String id = "";
-    private String pasteText = "http://stackoverflow.com/search?q=URL+Shortener+api+java";
-    private String targetText = "";
     private TextView resultTextView, qrWaitingTextView;
     private EditText targetEditText;
-    ImageButton getQRbtn;
+    private ImageButton getQRbtn;
 
-    private final static String REQUEST_URL = "https://www.googleapis.com/urlshortener/v1/url?key=q34rq34frfsfgsdfgsdfgsdfg";
-
-    private String shortenedURL = "";
+    private final static String REQUEST_URL = "https://www.googleapis.com/urlshortener/v1/url?key=AIzaSyDUs8hh8hN9gBm9Cqwg2EUSJ-GCcezGcKE";
     private final static String REQUEST_QR_CODE_URL = "http://chart.googleapis.com/chart?cht=qr&chs=547x547&choe=UTF-8&chld=H&chl=";
+
+    private String shortUrl = "";
+    private String pasteText = "";
+    private String targetText = "";
+    private String shortenedURL = "";
     private String genQRcodeURL = "";
 
     DownloadImage downloadImage;
@@ -69,6 +72,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     ClipData clip;
     ClipboardManager clipboard;
     RequestData requestData;
+    DBHelper dbHelper;
 
     public TextView getResultTextView() {
         return resultTextView;
@@ -108,7 +112,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         qrWaitingTextView = (TextView) findViewById(R.id.textViewQRWaiting);
 
         clipboard = (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
-
+        dbHelper = new DBHelper(this);
+        //Hide keyboard on start
         getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_HIDDEN);
 
     }
@@ -126,7 +131,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                         pasteText = item.getText().toString();
                     }
                 } else {
-                    Toast.makeText(this, "Clipboard is empty.\nThere is nothing to paste", Toast.LENGTH_LONG).show();
+                    Toast.makeText(this, "Clipboard is empty.\nCopy link first please", Toast.LENGTH_LONG).show();
                 }
 
                 if (!TextUtils.isEmpty(pasteText)) {
@@ -136,8 +141,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
             break;
             case R.id.btnCopy: {
-                if (id.startsWith("http")) {
-                    clip = ClipData.newPlainText("text", id);
+                if (shortUrl.startsWith("http")) {
+                    clip = ClipData.newPlainText("text", shortUrl);
                     clipboard.setPrimaryClip(clip);
                     Toast.makeText(this, "Copied", Toast.LENGTH_SHORT).show();
                 } else {
@@ -215,12 +220,14 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
             @Override
             public void onSuccess(int statusCode, Header[] headers, JSONObject obj) {
+                Log.e("RESPONSE ", obj.toString());
                 try {
-                    id = obj.getString("id");
-                    setResultTextView(id);
+                    shortUrl = obj.getString("id");
+                    setResultTextView(shortUrl);
+                    SQLiteDatabase database = dbHelper.getWritableDatabase();
 
                 } catch (JSONException e) {
-                    Toast.makeText(getApplicationContext(), "Error Occured [Server response might be invalid]!", Toast.LENGTH_LONG).show();
+                    Toast.makeText(getApplicationContext(), "Error Occured :(", Toast.LENGTH_LONG).show();
                     e.printStackTrace();
                     setResultTextView("");
                 }
@@ -228,6 +235,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
             @Override
             public void onFailure(int statusCode, Header[] headers, Throwable throwable, JSONObject errorResponse) {
+                Log.e("RESPONSE ", errorResponse.toString());
+
                 if (statusCode == 404) {
                     Toast.makeText(getApplicationContext(), "Not Found", Toast.LENGTH_LONG).show();
                 } else if (statusCode == 500) {
