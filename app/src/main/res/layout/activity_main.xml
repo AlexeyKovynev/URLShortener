@@ -21,41 +21,33 @@
             android:orientation="horizontal"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:gravity="center_horizontal"
-            android:weightSum="1">
-
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:textAppearance="?android:attr/textAppearanceSmall"
-                android:text="Paste or type URL here:"
-                android:id="@+id/textViewTopTitle" />
-        </LinearLayout>
-
-        <LinearLayout
-            android:orientation="horizontal"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:gravity="fill_horizontal|top"
             android:weightSum="1">
 
             <EditText
-                android:layout_width="251dp"
-                android:layout_height="140dp"
+                android:layout_width="match_parent"
+                android:layout_height="100dp"
                 android:id="@+id/editTextTargetUrl"
                 android:focusable="true"
                 android:enabled="true"
                 android:hint="Type URL here or paste from clipboard"
-                android:clickable="true"
+                android:inputType="textNoSuggestions|textUri|textMultiLine"
+                android:layout_marginRight="8dp"
+                android:layout_weight="1"
+                android:longClickable="true"
+                android:textSize="15dp"
+                android:linksClickable="true"
+                android:padding="8dp"
                 android:gravity="top|left"
-                android:inputType="textMultiLine|textNoSuggestions" />
+                android:autoLink="web"
+                android:textColorLink="@color/colorPrimary" />
 
             <Button
-                android:layout_width="match_parent"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="Paste"
                 android:id="@+id/btnPaste"
-                android:layout_gravity="center_vertical" />
+                android:layout_gravity="center"
+                android:layout_weight="1" />
         </LinearLayout>
 
         <LinearLayout
@@ -82,13 +74,17 @@
             <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:textAppearance="?android:attr/textAppearanceLarge"
                 android:id="@+id/textViewResult"
                 android:linksClickable="true"
                 android:textIsSelectable="true"
                 android:layout_weight="1"
                 android:paddingTop="8dp"
-                android:paddingBottom="8dp"/>
+                android:paddingBottom="8dp"
+                android:autoLink="web"
+                android:textColorLink="@color/colorPrimary"
+                android:textStyle="bold"
+                android:singleLine="true"
+                android:textSize="18dp" />
 
         </LinearLayout>
 
@@ -128,17 +124,15 @@
         </LinearLayout>
 
         <TextView
-            android:layout_width="wrap_content"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:textAppearance="?android:attr/textAppearanceMedium"
             android:id="@+id/textViewQRWaiting" />
 
-        <ScrollView
+        <ListView
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:id="@+id/scrollView" >
-
-        </ScrollView>
+            android:id="@+id/listView" />
 
     </LinearLayout>
 

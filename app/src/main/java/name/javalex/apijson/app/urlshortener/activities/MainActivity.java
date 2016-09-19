@@ -4,7 +4,9 @@ import android.app.Dialog;
 import android.content.ClipData;
 import android.content.ClipDescription;
 import android.content.ClipboardManager;
+import android.content.ContentValues;
 import android.content.Context;
+import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
@@ -21,6 +23,7 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.ImageView;
+import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -40,14 +43,20 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLConnection;
 import java.net.UnknownHostException;
+import java.text.DateFormat;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
 
 import cz.msebera.android.httpclient.Header;
 import cz.msebera.android.httpclient.entity.ByteArrayEntity;
 import cz.msebera.android.httpclient.message.BasicHeader;
 import cz.msebera.android.httpclient.protocol.HTTP;
 import name.javalex.apijson.app.urlshortener.R;
+import name.javalex.apijson.app.urlshortener.adapters.ListAdapter;
+import name.javalex.apijson.app.urlshortener.entities.LongShortDate;
 import name.javalex.apijson.app.urlshortener.helpers.DBHelper;
-import name.javalex.apijson.app.urlshortener.urlEntity.RequestData;
+import name.javalex.apijson.app.urlshortener.entities.RequestData;
 
 public class MainActivity extends AppCompatActivity implements View.OnClickListener {
 
@@ -61,8 +70,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private String shortUrl = "";
     private String pasteText = "";
     private String targetText = "";
-    private String shortenedURL = "";
+    //private String shortenedURL = "";
     private String genQRcodeURL = "";
+    private String[] test = {"Item 1", "Item 2", "Item 3", "Item 4", "Item 5", "Item 6", "Item 7", "Item 8", "Item 9", "Item 10", "Item 11"};
 
     DownloadImage downloadImage;
     Dialog dialog;
@@ -73,17 +83,19 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     ClipboardManager clipboard;
     RequestData requestData;
     DBHelper dbHelper;
+    ListView listView;
+    ListAdapter listAdapter;
 
-    public TextView getResultTextView() {
-        return resultTextView;
+    public String getResultTextView() {
+        return resultTextView.getText().toString();
     }
 
     public void setResultTextView(String result) {
         this.resultTextView.setText(result);
     }
 
-    public void getTargetEditText() {
-        targetText = targetEditText.getText().toString();
+    public String getTargetEditText() {
+        return targetText = targetEditText.getText().toString();
     }
 
     public void setTargetEditText(String text) {
@@ -94,6 +106,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        //Hide keyboard on start
+        getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_HIDDEN);
 
         getQRbtn = (ImageButton) findViewById(R.id.btnGetQR);
         getQRbtn.setOnClickListener(this);
@@ -113,16 +128,18 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
         clipboard = (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
         dbHelper = new DBHelper(this);
-        //Hide keyboard on start
-        getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_HIDDEN);
 
+        listView = (ListView) findViewById(R.id.listView);
+
+        //Retrieve data from database in background and fill the list view
+        FillListView fillListView = new FillListView();
+        fillListView.execute();
     }
 
     @Override
     public void onClick(View view) {
         switch (view.getId()) {
             case R.id.btnPaste: {
-
                 if (clipboard.hasPrimaryClip()) {
                     clip = clipboard.getPrimaryClip();
 
@@ -133,12 +150,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 } else {
                     Toast.makeText(this, "Clipboard is empty.\nCopy link first please", Toast.LENGTH_LONG).show();
                 }
-
                 if (!TextUtils.isEmpty(pasteText)) {
                     setTargetEditText(pasteText);
                 }
             }
-
             break;
             case R.id.btnCopy: {
                 if (shortUrl.startsWith("http")) {
@@ -148,18 +163,16 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 } else {
                     Toast.makeText(this, "No results yet", Toast.LENGTH_SHORT).show();
                 }
-
             }
             break;
             case R.id.btnSubmit: {
-                getTargetEditText();
                 //Verify field not empty
-                if (!(targetText.matches(""))) {
+                if (!(getTargetEditText().matches(""))) {
                     //Verify internet connected
                     if (isOnline()) {
                         requestData = new RequestData();
                         requestData.setLongUrl(targetText);
-                        setResultTextView("Waiting...");
+                        setResultTextView("Working...");
                         try {
                             //Serialize to JSON and send request
                             sendRequest(serialize(requestData));
@@ -177,22 +190,20 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     Toast.makeText(this, "Please provide URL", Toast.LENGTH_SHORT).show();
                     setResultTextView("");
                 }
-
             }
             break;
             case R.id.btnGetQR: {
                 getQRbtn.setVisibility(View.GONE);
-                shortenedURL = resultTextView.getText().toString();
+                shortUrl = getResultTextView();
                 //Check internet connection
                 if (isOnline()) {
                     //Check URL present
-                    if (shortenedURL.startsWith("http")) {
+                    if (shortUrl.startsWith("http")) {
                         //Concatenate template with shortened URL
-                        genQRcodeURL = REQUEST_QR_CODE_URL + shortenedURL;
+                        genQRcodeURL = REQUEST_QR_CODE_URL + shortUrl;
                         downloadImage = new DownloadImage();
                         //Download QR code in background and display
                         downloadImage.execute();
-
                     } else {
                         Toast.makeText(this, "Cannot generate QR code", Toast.LENGTH_LONG).show();
                         getQRbtn.setVisibility(View.VISIBLE);
@@ -200,13 +211,13 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 } else {
                     Toast.makeText(this, "NO INTERNET CONNECTION", Toast.LENGTH_SHORT).show();
                     getQRbtn.setVisibility(View.VISIBLE);
-
                 }
             }
             break;
         }
     }
 
+    //Convert request body to JSON
     public String serialize(RequestData requestData) {
         gson = new Gson();
         return gson.toJson(requestData);
@@ -220,11 +231,11 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
             @Override
             public void onSuccess(int statusCode, Header[] headers, JSONObject obj) {
-                Log.e("RESPONSE ", obj.toString());
+                //Log.e("RESPONSE ", obj.toString());
                 try {
                     shortUrl = obj.getString("id");
                     setResultTextView(shortUrl);
-                    SQLiteDatabase database = dbHelper.getWritableDatabase();
+                    addToDataBase();
 
                 } catch (JSONException e) {
                     Toast.makeText(getApplicationContext(), "Error Occured :(", Toast.LENGTH_LONG).show();
@@ -256,22 +267,48 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         });
     }
 
+    private void addToDataBase() {
+        String currentDateTimeString = DateFormat.getDateTimeInstance().format(new Date());
+        Log.e("DATE and TIME", currentDateTimeString);
+
+        //Write to DB
+        SQLiteDatabase database = dbHelper.getWritableDatabase();
+        ContentValues contentValues = new ContentValues();
+        contentValues.put(DBHelper.KEY_SHORT_URL, shortUrl);
+        contentValues.put(DBHelper.KEY_ORIGINAL_URL, getTargetEditText());
+        contentValues.put(DBHelper.KEY_TIMESTAMP, currentDateTimeString);
+        database.insert(DBHelper.TABLE_REQUEST_HISTORY, null, contentValues);
+
+        //Read from DB
+        Cursor cursor = database.query(DBHelper.TABLE_REQUEST_HISTORY, null, null, null, null, null, null);
+        if (cursor.moveToFirst()) {
+            int idIndex = cursor.getColumnIndex(DBHelper.KEY_ID);
+            int shortUrlIndex = cursor.getColumnIndex(DBHelper.KEY_SHORT_URL);
+            int longUrlIndex = cursor.getColumnIndex(DBHelper.KEY_ORIGINAL_URL);
+            int dateTimeIndex = cursor.getColumnIndex(DBHelper.KEY_TIMESTAMP);
+            do {
+                Log.e("DB DATA", "ID = " + cursor.getInt(idIndex) +
+                        ", SU = " + cursor.getString(shortUrlIndex) +
+                        ", LU = " + cursor.getString(longUrlIndex) +
+                        ", TS = " + cursor.getString(dateTimeIndex));
+            } while (cursor.moveToNext());
+        } else {
+            Log.e("DB DATA", "0 rows");
+        }
+        cursor.close();
+        dbHelper.close();
+    }
 
     class DownloadImage extends AsyncTask<Void, Void, Void> {
-
         @Override
         protected void onPreExecute() {
             super.onPreExecute();
             qrWaitingTextView.setVisibility(View.VISIBLE);
             qrWaitingTextView.setText("Generating QR code...");
-
-
         }
-
 
         @Override
         protected Void doInBackground(Void... voids) {
-
             try {
                 URL url = new URL(genQRcodeURL);
                 URLConnection conn = url.openConnection();
@@ -327,4 +364,75 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             dialog.dismiss();
         }
     }
+
+    public boolean hasRows() {
+        boolean flag;
+        String queryString = "select exists(select 1 from " + DBHelper.TABLE_REQUEST_HISTORY  + ");";
+        SQLiteDatabase database = dbHelper.getReadableDatabase();
+        Cursor cursor = database.rawQuery(queryString, null);
+        cursor.moveToFirst();
+        int count = cursor.getInt(0);
+        if (count == 1) {
+            flag = true;
+        } else {
+            flag = false;
+        }
+        cursor.close();
+        dbHelper.close();
+        return flag;
+    }
+
+
+    class FillListView extends AsyncTask<Void, Void, Void> {
+        @Override
+        protected void onPreExecute() {
+            super.onPreExecute();
+            qrWaitingTextView.setVisibility(View.VISIBLE);
+            qrWaitingTextView.setText("Retrieving your history...");
+            dialog = new Dialog(MainActivity.this);
+            dialog.setContentView(R.layout.loading_overlay);
+            dialog.setCancelable(false);
+            dialog.show();
+        }
+
+        @Override
+        protected Void doInBackground(Void... voids) {
+
+            SQLiteDatabase database = dbHelper.getReadableDatabase();
+            List<LongShortDate> longShortDateList = new ArrayList<>();
+
+
+            //Read from DB
+            Cursor cursor = database.query(DBHelper.TABLE_REQUEST_HISTORY, null, null, null, null, null, null);
+            if (cursor.moveToLast()) {
+                int idIndex = cursor.getColumnIndex(DBHelper.KEY_ID);
+                int shortUrlIndex = cursor.getColumnIndex(DBHelper.KEY_SHORT_URL);
+                int longUrlIndex = cursor.getColumnIndex(DBHelper.KEY_ORIGINAL_URL);
+                int dateTimeIndex = cursor.getColumnIndex(DBHelper.KEY_TIMESTAMP);
+                do {
+                    LongShortDate longShortDate = new LongShortDate(cursor.getString(longUrlIndex), cursor.getString(shortUrlIndex),
+                            cursor.getString(dateTimeIndex), cursor.getInt(idIndex));
+                    longShortDateList.add(longShortDate);
+                    } while (cursor.moveToPrevious());
+            } else {
+                Log.e("DB DATA", "0 rows");
+            }
+            cursor.close();
+            dbHelper.close();
+            listAdapter = new ListAdapter(MainActivity.this, R.layout.list_layout, longShortDateList);
+
+            return null;
+        }
+
+        @Override
+        protected void onPostExecute(Void result) {
+            super.onPostExecute(result);
+            listView.setAdapter(listAdapter);
+
+            qrWaitingTextView.setText("");
+            qrWaitingTextView.setVisibility(View.GONE);
+            dialog.dismiss();
+        }
+    }
+
 }
