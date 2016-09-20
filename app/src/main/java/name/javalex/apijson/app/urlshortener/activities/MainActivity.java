@@ -65,12 +65,13 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private final static String REQUEST_URL = "https://www.googleapis.com/urlshortener/v1/url?key=fghfghfghfghfgh";
     private final static String REQUEST_QR_CODE_URL = "http://chart.googleapis.com/chart?cht=qr&chs=547x547&choe=UTF-8&chld=H&chl=";
 
+    private String shortenedURL = "";
     private String shortUrl = "";
     private String pasteText = "";
     private String targetText = "";
     private String genQRcodeURL = "";
-    private ImageButton getQRbtn;
 
+    ImageButton getQRbtn;
     DownloadImage downloadImage;
     Dialog dialog;
     Bitmap bitmap;
