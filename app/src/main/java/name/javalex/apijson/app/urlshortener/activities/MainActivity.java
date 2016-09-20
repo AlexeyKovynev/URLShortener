@@ -70,9 +70,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private String shortUrl = "";
     private String pasteText = "";
     private String targetText = "";
-    //private String shortenedURL = "";
     private String genQRcodeURL = "";
-    private String[] test = {"Item 1", "Item 2", "Item 3", "Item 4", "Item 5", "Item 6", "Item 7", "Item 8", "Item 9", "Item 10", "Item 11"};
 
     DownloadImage downloadImage;
     Dialog dialog;
@@ -85,6 +83,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     DBHelper dbHelper;
     ListView listView;
     ListAdapter listAdapter;
+    List<LongShortDate> longShortDateList;
+    LongShortDate lastLongShortDate, newLongShortDate;
 
     public String getResultTextView() {
         return resultTextView.getText().toString();
@@ -110,6 +110,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         //Hide keyboard on start
         getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_HIDDEN);
 
+
         getQRbtn = (ImageButton) findViewById(R.id.btnGetQR);
         getQRbtn.setOnClickListener(this);
 
@@ -125,6 +126,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         targetEditText = (EditText) findViewById(R.id.editTextTargetUrl);
         resultTextView = (TextView) findViewById(R.id.textViewResult);
         qrWaitingTextView = (TextView) findViewById(R.id.textViewQRWaiting);
+        qrWaitingTextView.setVisibility(View.GONE);
 
         clipboard = (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
         dbHelper = new DBHelper(this);
@@ -132,8 +134,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         listView = (ListView) findViewById(R.id.listView);
 
         //Retrieve data from database in background and fill the list view
-        FillListView fillListView = new FillListView();
-        fillListView.execute();
+        if (hasRows()) {
+            FillListView fillListView = new FillListView();
+            fillListView.execute();
+        }
     }
 
     @Override
@@ -142,7 +146,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             case R.id.btnPaste: {
                 if (clipboard.hasPrimaryClip()) {
                     clip = clipboard.getPrimaryClip();
-
+                    //Get data from buffer if it is plain text
                     if (clip.getDescription().hasMimeType(ClipDescription.MIMETYPE_TEXT_PLAIN)) {
                         ClipData.Item item = clip.getItemAt(0);
                         pasteText = item.getText().toString();
@@ -161,7 +165,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     clipboard.setPrimaryClip(clip);
                     Toast.makeText(this, "Copied", Toast.LENGTH_SHORT).show();
                 } else {
-                    Toast.makeText(this, "No results yet", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(this, "Nothing to copy", Toast.LENGTH_SHORT).show();
                 }
             }
             break;
@@ -231,11 +235,14 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
             @Override
             public void onSuccess(int statusCode, Header[] headers, JSONObject obj) {
-                //Log.e("RESPONSE ", obj.toString());
                 try {
                     shortUrl = obj.getString("id");
                     setResultTextView(shortUrl);
-                    addToDataBase();
+                    newLongShortDate = new LongShortDate(targetText, shortUrl);
+                    //Check is this row exist in history
+                    AddToDBAndUpdateList addToDBAndUpdateList = new AddToDBAndUpdateList();
+                    addToDBAndUpdateList.execute();
+
 
                 } catch (JSONException e) {
                     Toast.makeText(getApplicationContext(), "Error Occured :(", Toast.LENGTH_LONG).show();
@@ -265,38 +272,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 setResultTextView("");
             }
         });
-    }
-
-    private void addToDataBase() {
-        String currentDateTimeString = DateFormat.getDateTimeInstance().format(new Date());
-        Log.e("DATE and TIME", currentDateTimeString);
-
-        //Write to DB
-        SQLiteDatabase database = dbHelper.getWritableDatabase();
-        ContentValues contentValues = new ContentValues();
-        contentValues.put(DBHelper.KEY_SHORT_URL, shortUrl);
-        contentValues.put(DBHelper.KEY_ORIGINAL_URL, getTargetEditText());
-        contentValues.put(DBHelper.KEY_TIMESTAMP, currentDateTimeString);
-        database.insert(DBHelper.TABLE_REQUEST_HISTORY, null, contentValues);
-
-        //Read from DB
-        Cursor cursor = database.query(DBHelper.TABLE_REQUEST_HISTORY, null, null, null, null, null, null);
-        if (cursor.moveToFirst()) {
-            int idIndex = cursor.getColumnIndex(DBHelper.KEY_ID);
-            int shortUrlIndex = cursor.getColumnIndex(DBHelper.KEY_SHORT_URL);
-            int longUrlIndex = cursor.getColumnIndex(DBHelper.KEY_ORIGINAL_URL);
-            int dateTimeIndex = cursor.getColumnIndex(DBHelper.KEY_TIMESTAMP);
-            do {
-                Log.e("DB DATA", "ID = " + cursor.getInt(idIndex) +
-                        ", SU = " + cursor.getString(shortUrlIndex) +
-                        ", LU = " + cursor.getString(longUrlIndex) +
-                        ", TS = " + cursor.getString(dateTimeIndex));
-            } while (cursor.moveToNext());
-        } else {
-            Log.e("DB DATA", "0 rows");
-        }
-        cursor.close();
-        dbHelper.close();
     }
 
     class DownloadImage extends AsyncTask<Void, Void, Void> {
@@ -382,14 +357,12 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         return flag;
     }
 
-
+    //Fill out the list view on program start
     class FillListView extends AsyncTask<Void, Void, Void> {
         @Override
         protected void onPreExecute() {
             super.onPreExecute();
-            qrWaitingTextView.setVisibility(View.VISIBLE);
-            qrWaitingTextView.setText("Retrieving your history...");
-            dialog = new Dialog(MainActivity.this);
+            dialog = new Dialog(MainActivity.this, R.style.ProgressDialog);
             dialog.setContentView(R.layout.loading_overlay);
             dialog.setCancelable(false);
             dialog.show();
@@ -399,12 +372,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         protected Void doInBackground(Void... voids) {
 
             SQLiteDatabase database = dbHelper.getReadableDatabase();
-            List<LongShortDate> longShortDateList = new ArrayList<>();
-
-
+            longShortDateList = new ArrayList<>();
             //Read from DB
             Cursor cursor = database.query(DBHelper.TABLE_REQUEST_HISTORY, null, null, null, null, null, null);
-            if (cursor.moveToLast()) {
+            if (cursor.moveToFirst()) {
                 int idIndex = cursor.getColumnIndex(DBHelper.KEY_ID);
                 int shortUrlIndex = cursor.getColumnIndex(DBHelper.KEY_SHORT_URL);
                 int longUrlIndex = cursor.getColumnIndex(DBHelper.KEY_ORIGINAL_URL);
@@ -413,26 +384,103 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     LongShortDate longShortDate = new LongShortDate(cursor.getString(longUrlIndex), cursor.getString(shortUrlIndex),
                             cursor.getString(dateTimeIndex), cursor.getInt(idIndex));
                     longShortDateList.add(longShortDate);
-                    } while (cursor.moveToPrevious());
-            } else {
-                Log.e("DB DATA", "0 rows");
+                    } while (cursor.moveToNext());
             }
             cursor.close();
             dbHelper.close();
-            listAdapter = new ListAdapter(MainActivity.this, R.layout.list_layout, longShortDateList);
-
+            //for debugging popup
+            try {
+                Thread.sleep(1500);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+            //-------------
             return null;
         }
 
         @Override
         protected void onPostExecute(Void result) {
             super.onPostExecute(result);
-            listView.setAdapter(listAdapter);
-
-            qrWaitingTextView.setText("");
-            qrWaitingTextView.setVisibility(View.GONE);
             dialog.dismiss();
+            listAdapter = new ListAdapter(MainActivity.this, R.layout.list_layout, longShortDateList);
+            listView.setAdapter(listAdapter);
         }
+    }
+
+    //Check is this line already exist in database in last position
+    class AddToDBAndUpdateList extends AsyncTask<Void, Void, Void> {
+        @Override
+        protected void onPreExecute() {
+            super.onPreExecute();
+            dialog = new Dialog(MainActivity.this, R.style.ProgressDialog);
+            dialog.setContentView(R.layout.loading_overlay);
+            dialog.setCancelable(false);
+            dialog.show();
+        }
+
+        @Override
+        protected Void doInBackground(Void... voids) {
+
+            SQLiteDatabase database = dbHelper.getReadableDatabase();
+            //Read from DB
+            Cursor cursor = database.query(DBHelper.TABLE_REQUEST_HISTORY, null, null, null, null, null, null);
+            if (cursor.moveToLast()) {
+                int shortUrlIndex = cursor.getColumnIndex(DBHelper.KEY_SHORT_URL);
+                int longUrlIndex = cursor.getColumnIndex(DBHelper.KEY_ORIGINAL_URL);
+                lastLongShortDate = new LongShortDate(cursor.getString(longUrlIndex), cursor.getString(shortUrlIndex));
+            }
+            cursor.close();
+            dbHelper.close();
+
+            //for debugging popup
+            try {
+                Thread.sleep(1000);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+            //-------------
+            return null;
+        }
+
+        @Override
+        protected void onPostExecute(Void result) {
+            super.onPostExecute(result);
+            dialog.dismiss();
+            Log.e("LoShD from UPDATE", lastLongShortDate.toString());
+            Log.e("LoShD from UPDATE", newLongShortDate.toString());
+
+
+            if (!(lastLongShortDate.toString().equals(newLongShortDate.toString()))) {
+                Log.e("!!!!!"," T R U E");
+                addToDataBase();
+                listAdapter.notifyDataSetChanged();
+            }
+
+        }
+    }
+
+    private void addToDataBase() {
+        String currentDateTimeString = DateFormat.getDateTimeInstance().format(new Date());
+        //Write to DB
+        SQLiteDatabase database = dbHelper.getWritableDatabase();
+        ContentValues contentValues = new ContentValues();
+        contentValues.put(DBHelper.KEY_SHORT_URL, shortUrl);
+        contentValues.put(DBHelper.KEY_ORIGINAL_URL, getTargetEditText());
+        contentValues.put(DBHelper.KEY_TIMESTAMP, currentDateTimeString);
+        database.insert(DBHelper.TABLE_REQUEST_HISTORY, null, contentValues);
+
+        //Update list with last position from DB
+        Cursor cursor = database.query(DBHelper.TABLE_REQUEST_HISTORY, null, null, null, null, null, null);
+        cursor.moveToLast();
+        int idIndex = cursor.getColumnIndex(DBHelper.KEY_ID);
+        int shortUrlIndex = cursor.getColumnIndex(DBHelper.KEY_SHORT_URL);
+        int longUrlIndex = cursor.getColumnIndex(DBHelper.KEY_ORIGINAL_URL);
+        int dateTimeIndex = cursor.getColumnIndex(DBHelper.KEY_TIMESTAMP);
+        LongShortDate longShortDate = new LongShortDate(cursor.getString(longUrlIndex), cursor.getString(shortUrlIndex),
+                cursor.getString(dateTimeIndex), cursor.getInt(idIndex));
+        Log.e("LoShD from ADD TO DB", longShortDate.toString());
+        longShortDateList.add(longShortDate);
+        dbHelper.close();
     }
 
 }

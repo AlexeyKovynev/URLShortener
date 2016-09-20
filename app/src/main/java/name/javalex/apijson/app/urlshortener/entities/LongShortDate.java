@@ -6,11 +6,25 @@ public class LongShortDate {
     private String dateAndTime;
     private int id;
 
+    @Override
+    public String toString() {
+        return "LongShortDate{" +
+                "longLink='" + longLink + '\'' +
+                ", shortLink='" + shortLink + '\'' +
+                ", dateAndTime='" + dateAndTime + '\'' +
+                ", id=" + id +
+                '}';
+    }
+
     public LongShortDate(String longLink, String shortLink, String dateAndTime, int id) {
         this.longLink = longLink;
         this.shortLink = shortLink;
         this.dateAndTime = dateAndTime;
         this.id = id;
+    }
+    public LongShortDate(String longLink, String shortLink) {
+        this.longLink = longLink;
+        this.shortLink = shortLink;
     }
 
     public int getId() {
