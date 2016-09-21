@@ -34,20 +34,20 @@ public class ListAdapter extends ArrayAdapter<LongShortDate> {
         LongShortDate longShortDate = getItem(position);
 
         if (longShortDate != null) {
-            TextView leftTextView = (TextView) view.findViewById(R.id.longUrlTextView);
-            TextView rightTextView = (TextView) view.findViewById(R.id.shortUrlTextView);
-            TextView centreTextView = (TextView) view.findViewById(R.id.dateTimeTextView);
+            TextView originalUrlTextView = (TextView) view.findViewById(R.id.longUrlTextView);
+            TextView shortUrlTextView = (TextView) view.findViewById(R.id.shortUrlTextView);
+            TextView timestampTextView = (TextView) view.findViewById(R.id.dateTimeTextView);
 
-            if (leftTextView != null) {
-                leftTextView.setText(longShortDate.getLongLink());
+            if (originalUrlTextView != null) {
+                originalUrlTextView.setText(longShortDate.getLongLink());
             }
 
-            if (rightTextView != null) {
-                rightTextView.setText(longShortDate.getShortLink());
+            if (shortUrlTextView != null) {
+                shortUrlTextView.setText(longShortDate.getShortLink());
             }
 
-            if (centreTextView != null) {
-                centreTextView.setText(longShortDate.getDateAndTime());
+            if (timestampTextView != null) {
+                timestampTextView.setText(longShortDate.getDateAndTime());
             }
         }
 

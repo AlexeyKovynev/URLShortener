@@ -17,12 +17,16 @@ import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.util.Log;
+import android.view.LayoutInflater;
 import android.view.View;
 import android.view.WindowManager;
+import android.widget.AdapterView;
 import android.widget.Button;
+import android.widget.CheckBox;
 import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -62,7 +66,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     private TextView resultTextView, qrWaitingTextView;
     private EditText targetEditText;
-    private final static String REQUEST_URL = "https://www.googleapis.com/urlshortener/v1/url?key=fghfghfghfghfgh";
+    private final static String REQUEST_URL = "https://www.googleapis.com/urlshortener/v1/url?key=AIzaSyDUs8hh8hN9gBm9Cqwg2EUSJ-GCcezGcKE";
     private final static String REQUEST_QR_CODE_URL = "http://chart.googleapis.com/chart?cht=qr&chs=547x547&choe=UTF-8&chld=H&chl=";
 
     private String shortUrl = "";
@@ -70,7 +74,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private String targetText = "";
     private String genQRcodeURL = "";
 
-    ImageButton getQRbtn;
+    ImageButton getQRbtn, deleteBtn;
     DownloadImage downloadImage;
     Dialog dialog;
     Bitmap bitmap;
@@ -109,9 +113,13 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         //Hide keyboard on start
         getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_HIDDEN);
 
-
         getQRbtn = (ImageButton) findViewById(R.id.btnGetQR);
         getQRbtn.setOnClickListener(this);
+
+        deleteBtn = (ImageButton) findViewById(R.id.btnDelete);
+        deleteBtn.setOnClickListener(this);
+        deleteBtn.setVisibility(View.GONE);
+
 
         Button shortenBtn = (Button) findViewById(R.id.btnSubmit);
         shortenBtn.setOnClickListener(this);
@@ -131,12 +139,47 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         dbHelper = new DBHelper(this);
 
         listView = (ListView) findViewById(R.id.listView);
+        listView.setChoiceMode(ListView.CHOICE_MODE_MULTIPLE);
+
 
         //Retrieve data from database in background and fill the list view
         if (hasRows()) {
             FillListView fillListView = new FillListView();
             fillListView.execute();
         }
+
+        listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
+                Log.e("LOG", "Position " + i);
+                boolean flag;
+                if (!listView.isItemChecked(i)) {
+                    flag = false;
+                } else {
+                    flag = true;
+                }
+                Log.e("FLAG", "" + flag);
+                if(listView.getCheckedItemCount() > 0) {
+                    deleteBtn.setVisibility(View.VISIBLE);
+                } else {
+                    deleteBtn.setVisibility(View.GONE);
+                }
+            }
+        });
+
+/*
+
+        listView.setChoiceMode(ListView.CHOICE_MODE_MULTIPLE);
+        listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> arg0, View arg1, int position,
+                                    long arg3) {
+                selectedItem = listView.getItemAtPosition(position).toString();
+                removeItem(selectedItem);
+            }
+        });
+*/
+
     }
 
     @Override
@@ -341,7 +384,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     public boolean hasRows() {
         boolean flag;
-        String queryString = "select exists(select 1 from " + DBHelper.TABLE_REQUEST_HISTORY  + ");";
+        String queryString = "select exists(select 1 from " + DBHelper.TABLE_REQUEST_HISTORY + ");";
         SQLiteDatabase database = dbHelper.getReadableDatabase();
         Cursor cursor = database.rawQuery(queryString, null);
         cursor.moveToFirst();
@@ -374,7 +417,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             longShortDateList = new ArrayList<>();
             //Read from DB
             Cursor cursor = database.query(DBHelper.TABLE_REQUEST_HISTORY, null, null, null, null, null, null);
-            if (cursor.moveToFirst()) {
+            if (cursor.moveToLast()) {
                 int idIndex = cursor.getColumnIndex(DBHelper.KEY_ID);
                 int shortUrlIndex = cursor.getColumnIndex(DBHelper.KEY_SHORT_URL);
                 int longUrlIndex = cursor.getColumnIndex(DBHelper.KEY_ORIGINAL_URL);
@@ -383,17 +426,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     LongShortDate longShortDate = new LongShortDate(cursor.getString(longUrlIndex), cursor.getString(shortUrlIndex),
                             cursor.getString(dateTimeIndex), cursor.getInt(idIndex));
                     longShortDateList.add(longShortDate);
-                    } while (cursor.moveToNext());
+                } while (cursor.moveToPrevious());
             }
             cursor.close();
             dbHelper.close();
-            //for debugging popup
-            try {
-                Thread.sleep(1500);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
-            //-------------
             return null;
         }
 
@@ -430,14 +466,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             }
             cursor.close();
             dbHelper.close();
-
-            //for debugging popup
-            try {
-                Thread.sleep(1000);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
-            //-------------
             return null;
         }
 
@@ -445,12 +473,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         protected void onPostExecute(Void result) {
             super.onPostExecute(result);
             dialog.dismiss();
-            Log.e("LoShD from UPDATE", lastLongShortDate.toString());
-            Log.e("LoShD from UPDATE", newLongShortDate.toString());
 
-
-            if (!(lastLongShortDate.toString().equals(newLongShortDate.toString()))) {
-                Log.e("!!!!!"," T R U E");
+            if (!(lastLongShortDate.equals(newLongShortDate))) {
                 addToDataBase();
                 listAdapter.notifyDataSetChanged();
             }
@@ -477,7 +501,13 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         LongShortDate longShortDate = new LongShortDate(cursor.getString(longUrlIndex), cursor.getString(shortUrlIndex),
                 cursor.getString(dateTimeIndex), cursor.getInt(idIndex));
         Log.e("LoShD from ADD TO DB", longShortDate.toString());
-        longShortDateList.add(longShortDate);
+        longShortDateList.add(0, longShortDate);
+
         dbHelper.close();
+    }
+
+    protected void removeItem(String item) {
+        longShortDateList.remove(item);
+        listAdapter.notifyDataSetChanged();
     }
 }

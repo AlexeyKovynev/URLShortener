@@ -16,6 +16,26 @@ public class LongShortDate {
                 '}';
     }
 
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        LongShortDate that = (LongShortDate) o;
+
+        if (longLink != null ? !longLink.equals(that.longLink) : that.longLink != null)
+            return false;
+        return shortLink != null ? shortLink.equals(that.shortLink) : that.shortLink == null;
+
+    }
+
+    @Override
+    public int hashCode() {
+        int result = longLink != null ? longLink.hashCode() : 0;
+        result = 31 * result + (shortLink != null ? shortLink.hashCode() : 0);
+        return result;
+    }
+
     public LongShortDate(String longLink, String shortLink, String dateAndTime, int id) {
         this.longLink = longLink;
         this.shortLink = shortLink;
