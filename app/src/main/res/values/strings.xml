@@ -1,3 +1,25 @@
 <resources>
     <string name="app_name">URL Shortener</string>
+    <string name="yes">Yes</string>
+    <string name="no">No</string>
+    <string name="delete_confirmation">Remove from history?</string>
+    <string name="empty_clipboard">Clipboard is empty</string>
+    <string name="copied">Copied</string>
+    <string name="nothing_to_copy">No shorten URL to copy</string>
+    <string name="working">Please wait…</string>
+    <string name="no_internet_message">No internet connection</string>
+    <string name="no_link_message">Please provide URL</string>
+    <string name="cannot_generate_qr_message">Cannot generate QR code</string>
+    <string name="error_occurred_message">An error has occurred :(</string>
+    <string name="error_400_message">This link cannot be shortened</string>
+    <string name="error_403_message">Wrong data provided</string>
+    <string name="error_500_message">Internal Server Error,\ntry later please</string>
+    <string name="error_404_message">Not Found</string>
+    <string name="undefined_error_message">"Terrible error occurred: "</string>
+    <string name="generating_code_message">Getting QR code…</string>
+    <string name="removed_from_history_message">Removed</string>
+    <string name="copy_btn">Copy</string>
+    <string name="paste_btn">Paste</string>
+    <string name="shorten_btn">Shorten</string>
+    <string name="edittext_placeholder">Type URL here or paste from clipboard</string>
 </resources>

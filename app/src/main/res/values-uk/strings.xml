@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">URL Shortener</string>
+    <string name="yes">Так</string>
+    <string name="no">Ні</string>
+    <string name="delete_confirmation">Видалити з історії?</string>
+    <string name="empty_clipboard">Буфер обміну не містить посилань</string>
+    <string name="copied">Скопійовано</string>
+    <string name="nothing_to_copy">Немає скороченого посилання для копіювання</string>
+    <string name="working">Зачекайте…</string>
+    <string name="no_internet_message">Відсутнє інтернет-підключення</string>
+    <string name="no_link_message">Введіть посилання для скорочення</string>
+    <string name="cannot_generate_qr_message">Неможливо отримати QR-код</string>
+    <string name="error_occurred_message">Виникла помилка :(</string>
+    <string name="error_400_message">Неможливо скоротити посилання</string>
+    <string name="error_403_message">Неприпустимий формат посилання</string>
+    <string name="error_500_message">Помилка сервера,\nбудь ласка, спробуйте пізніше</string>
+    <string name="error_404_message">Сервер не знайдено</string>
+    <string name="undefined_error_message">Відбулася катастрофічна помилка: </string>
+    <string name="generating_code_message">Отримання QR-коду…</string>
+    <string name="removed_from_history_message">Очищено</string>
+    <string name="copy_btn">Копіювати</string>
+    <string name="paste_btn">Вставити</string>
+    <string name="shorten_btn">Скоротити</string>
+    <string name="edittext_placeholder">Введіть текст посилання або вставте з буфера обміну</string>
+
+</resources>

@@ -1,4 +1,4 @@
-package name.javalex.apijson.app.urlshortener.urlEntity;
+package name.javalex.apijson.app.urlshortener.entities;
 
 public class RequestData {
     private String longUrl;
