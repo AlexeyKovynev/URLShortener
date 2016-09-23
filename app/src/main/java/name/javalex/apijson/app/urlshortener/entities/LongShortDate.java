@@ -16,25 +16,7 @@ public class LongShortDate {
                 '}';
     }
 
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
 
-        LongShortDate that = (LongShortDate) o;
-
-        if (longLink != null ? !longLink.equals(that.longLink) : that.longLink != null)
-            return false;
-        return shortLink != null ? shortLink.equals(that.shortLink) : that.shortLink == null;
-
-    }
-
-    @Override
-    public int hashCode() {
-        int result = longLink != null ? longLink.hashCode() : 0;
-        result = 31 * result + (shortLink != null ? shortLink.hashCode() : 0);
-        return result;
-    }
 
     public LongShortDate(String longLink, String shortLink, String dateAndTime, int id) {
         this.longLink = longLink;
@@ -59,23 +41,31 @@ public class LongShortDate {
         return longLink;
     }
 
-    public void setLongLink(String longLink) {
-        this.longLink = longLink;
-    }
-
     public String getShortLink() {
         return shortLink;
-    }
-
-    public void setShortLink(String shortLink) {
-        this.shortLink = shortLink;
     }
 
     public String getDateAndTime() {
         return dateAndTime;
     }
 
-    public void setDateAndTime(String dateAndTime) {
-        this.dateAndTime = dateAndTime;
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        LongShortDate that = (LongShortDate) o;
+
+        if (longLink != null ? !longLink.equals(that.longLink) : that.longLink != null)
+            return false;
+        return shortLink != null ? shortLink.equals(that.shortLink) : that.shortLink == null;
+
+    }
+
+    @Override
+    public int hashCode() {
+        int result = longLink != null ? longLink.hashCode() : 0;
+        result = 31 * result + (shortLink != null ? shortLink.hashCode() : 0);
+        return result;
     }
 }

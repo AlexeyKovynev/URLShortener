@@ -10,6 +10,8 @@
         android:layout_height="match_parent"
         android:id="@+id/imageViewQR"
         android:layout_gravity="center"
-        android:padding="48dp"/>
+        android:paddingBottom="48dp"
+        android:paddingLeft="48dp"
+        android:paddingRight="48dp"/>
 
 </LinearLayout>

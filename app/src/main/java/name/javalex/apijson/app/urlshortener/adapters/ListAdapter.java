@@ -14,11 +14,15 @@ import name.javalex.apijson.app.urlshortener.entities.LongShortDate;
 
 public class ListAdapter extends ArrayAdapter<LongShortDate> {
 
+    private LayoutInflater layoutInflater;
+    //List<LongShortDate> longShortDateList;
+
     private int layoutResource;
 
     public ListAdapter(Context context, int layoutResource, List<LongShortDate> longShortDateList) {
         super(context, layoutResource, longShortDateList);
         this.layoutResource = layoutResource;
+        //this.longShortDateList = longShortDateList1;
     }
 
     @Override
@@ -27,7 +31,7 @@ public class ListAdapter extends ArrayAdapter<LongShortDate> {
         View view = convertView;
 
         if (view == null) {
-            LayoutInflater layoutInflater = LayoutInflater.from(getContext());
+            layoutInflater = LayoutInflater.from(getContext());
             view = layoutInflater.inflate(layoutResource, null);
         }
 
@@ -53,4 +57,28 @@ public class ListAdapter extends ArrayAdapter<LongShortDate> {
 
         return view;
     }
+
+
+/*
+    public void updateReceiptsList(List<LongShortDate> newlist) {
+        longShortDateList.clear();
+        longShortDateList.addAll(newlist);
+        this.notifyDataSetChanged();
+    }
+
+    //Sum of items
+    @Override
+    public int getCount() {
+        return longShortDateList.size();
+    }
+
+    //Item's position
+    @Override
+    public LongShortDate getItem(int position) {
+        return longShortDateList.get(position);
+    }
+*/
+
+
+
 }
