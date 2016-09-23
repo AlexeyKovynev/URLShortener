@@ -1,4 +1,4 @@
-# URLShortener
+# URL Shortener
 Android application that can make URLs shorter using Google URL Shortener API (goo.gl).
 
 In this app I used following libraries and technologies:
