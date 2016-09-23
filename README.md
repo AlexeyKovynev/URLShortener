@@ -7,4 +7,5 @@ In this app I used following libraries and technologies:
 - Requests history are saved into SQLite database and displayed as a list using adapter (preliminarily saved to collection);
 - For each generated short URL could be requested QR code and displayed as image;
 - Link can be written manually or pasted from clipboard, generated short URL also could be copied to clipboard;
-- I know that there is a lot of spaghetti code now in Main Activity and I should do a lot of refactoring with my DB and adapter methods. And it will be done in nearest future.
+
+P.S. I know that there is a lot of spaghetti code now in Main Activity and I should do a lot of refactoring with my DB and adapter methods. And it will be done in nearest future.
