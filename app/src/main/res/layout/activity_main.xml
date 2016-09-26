@@ -29,7 +29,6 @@
                 android:id="@+id/editTextTargetUrl"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
-                android:layout_marginRight="8dp"
                 android:autoLink="web"
                 android:enabled="true"
                 android:focusable="true"
@@ -60,7 +59,6 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_gravity="center"
-                    android:layout_marginBottom="8dp"
                     android:layout_weight="1"
                     android:text="@string/paste_btn" />
 
@@ -112,7 +110,6 @@
             android:id="@+id/btnGetQR"
             android:layout_width="wrap_content"
             android:layout_height="match_parent"
-            android:layout_marginEnd="8dp"
             android:maxHeight="48dp"
             android:maxWidth="48dp"
             android:minHeight="48dp"
@@ -132,7 +129,6 @@
             android:id="@+id/btnDelete"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginLeft="8dp"
             android:maxHeight="48dp"
             android:maxWidth="48dp"
             android:minHeight="48dp"

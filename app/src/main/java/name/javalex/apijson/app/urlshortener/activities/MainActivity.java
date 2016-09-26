@@ -65,7 +65,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     private TextView resultTextView, qrWaitingTextView;
     private EditText targetEditText;
-    private final static String REQUEST_URL = "https://www.googleapis.com/urlshortener/v1/url?key=fghfghfghfghfgh";
+    private final static String REQUEST_URL = "https://www.googleapis.com/urlshortener/v1/url?key=AIzaSyDUs8hh8hN9gBm9Cqwg2EUSJ-GCcezGcKE";
     private final static String REQUEST_QR_CODE_URL = "http://chart.googleapis.com/chart?cht=qr&chs=547x547&choe=UTF-8&chld=H&chl=";
 
     private String shortUrl = "";
