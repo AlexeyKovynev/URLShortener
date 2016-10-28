@@ -4,11 +4,8 @@ import android.app.Dialog;
 import android.content.ClipData;
 import android.content.ClipDescription;
 import android.content.ClipboardManager;
-import android.content.ContentValues;
 import android.content.Context;
 import android.content.DialogInterface;
-import android.database.Cursor;
-import android.database.sqlite.SQLiteDatabase;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.net.ConnectivityManager;
@@ -20,6 +17,7 @@ import android.os.Bundle;
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.View;
+import android.view.Window;
 import android.view.WindowManager;
 import android.widget.AdapterView;
 import android.widget.Button;
@@ -45,9 +43,7 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.net.URLConnection;
 import java.net.UnknownHostException;
-import java.text.DateFormat;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -58,20 +54,13 @@ import cz.msebera.android.httpclient.protocol.HTTP;
 import name.javalex.apijson.app.urlshortener.R;
 import name.javalex.apijson.app.urlshortener.adapters.ListAdapter;
 import name.javalex.apijson.app.urlshortener.entities.LongShortDate;
-import name.javalex.apijson.app.urlshortener.helpers.DBHelper;
+import name.javalex.apijson.app.urlshortener.helpers.DBExecutor;
 import name.javalex.apijson.app.urlshortener.entities.RequestData;
 
 public class MainActivity extends AppCompatActivity implements View.OnClickListener {
 
-    private TextView resultTextView, qrWaitingTextView;
-    private EditText targetEditText;
-    private final static String REQUEST_URL = "https://www.googleapis.com/urlshortener/v1/url?key=AIzaSyDUs8hh8hN9gBm9Cqwg2EUSJ-GCcezGcKE";
-    private final static String REQUEST_QR_CODE_URL = "http://chart.googleapis.com/chart?cht=qr&chs=547x547&choe=UTF-8&chld=H&chl=";
-
-    private String shortUrl = "";
-    private String pasteText = "";
-    private String targetText = "";
-    private String genQRcodeURL = "";
+    public List<LongShortDate> longShortDateList;
+    public List<Integer> rowsToBeRemoved;
 
     ImageButton getQRbtn, deleteBtn;
     DownloadImage downloadImage;
@@ -83,12 +72,20 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     ClipData clip;
     ClipboardManager clipboard;
     RequestData requestData;
-    DBHelper dbHelper;
     ListView listView;
     ListAdapter listAdapter;
-    List<LongShortDate> longShortDateList;
     LongShortDate lastLongShortDate, newLongShortDate;
-    List<Integer> rowsToBeRemoved;
+    DBExecutor dbExecutor;
+
+    private TextView resultTextView, qrWaitingTextView;
+    private EditText targetEditText;
+    private final static String REQUEST_URL = "https://www.googleapis.com/urlshortener/v1/url?key=4w5y4e5yw45yw45yw45yw45y";
+    private final static String REQUEST_QR_CODE_URL = "http://chart.googleapis.com/chart?cht=qr&chs=547x547&choe=UTF-8&chld=H&chl=";
+
+    private String shortUrl = "";
+    private String pasteText = "";
+    private String targetText = "";
+    private String genQRcodeURL = "";
 
     public String getResultTextView() {
         return resultTextView.getText().toString();
@@ -118,6 +115,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
         getQRbtn = (ImageButton) findViewById(R.id.btnGetQR);
         getQRbtn.setOnClickListener(this);
+        getQRbtn.setVisibility(View.GONE);
 
         deleteBtn = (ImageButton) findViewById(R.id.btnDelete);
         deleteBtn.setOnClickListener(this);
@@ -139,13 +137,13 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         qrWaitingTextView.setVisibility(View.GONE);
 
         clipboard = (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
-        dbHelper = new DBHelper(this);
+        dbExecutor = new DBExecutor();
 
         listView = (ListView) findViewById(R.id.listView);
         listView.setChoiceMode(ListView.CHOICE_MODE_MULTIPLE);
 
         //Retrieve data from database in background and fill the list view
-        if (hasRows()) {
+        if (dbExecutor.hasRows(this)) {
             new FillListView().execute();
         }
         rowsToBeRemoved = new LinkedList<>();
@@ -163,11 +161,14 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 if (listView.getCheckedItemCount() == 1) {
                     setResultTextView(longShortDateList.get(i).getShortLink());
                     deleteBtn.setVisibility(View.VISIBLE);
+                    getQRbtn.setVisibility(View.VISIBLE);
                 } else if (listView.getCheckedItemCount() > 1) {
                     deleteBtn.setVisibility(View.VISIBLE);
+                    getQRbtn.setVisibility(View.GONE);
                     setResultTextView("");
                 } else {
                     deleteBtn.setVisibility(View.GONE);
+                    getQRbtn.setVisibility(View.GONE);
                     setResultTextView("");
                 }
 
@@ -215,6 +216,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                         requestData = new RequestData();
                         requestData.setLongUrl(targetText);
                         setResultTextView(getString(R.string.working));
+                        getQRbtn.setVisibility(View.GONE);
                         try {
                             //Serialize to JSON and send request
                             sendRequest(serialize(requestData));
@@ -223,6 +225,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                         } catch (UnknownHostException err) {
                             Toast.makeText(this, R.string.no_internet_message, Toast.LENGTH_SHORT).show();
                             setResultTextView(getString(R.string.no_internet_message));
+                            getQRbtn.setVisibility(View.GONE);
                             err.printStackTrace();
                         }
                     } else {
@@ -231,6 +234,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 } else {
                     Toast.makeText(this, R.string.no_link_message, Toast.LENGTH_SHORT).show();
                     setResultTextView("");
+                    getQRbtn.setVisibility(View.GONE);
                 }
             }
             break;
@@ -244,7 +248,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                         //Concatenate template with shortened URL
                         genQRcodeURL = REQUEST_QR_CODE_URL + shortUrl;
                         downloadImage = new DownloadImage();
-                        //Download QR code in background and display
+                        //Download QR code in display
                         downloadImage.execute();
                     } else {
                         Toast.makeText(this, R.string.cannot_generate_qr_message, Toast.LENGTH_LONG).show();
@@ -258,6 +262,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             break;
             case R.id.btnDelete: {
                 deleteBtn.setVisibility(View.GONE);
+                getQRbtn.setVisibility(View.GONE);
                 removeFromDBandFromList();
                 listView.clearChoices();
                 setResultTextView("");
@@ -284,6 +289,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 try {
                     shortUrl = obj.getString("id");
                     setResultTextView(shortUrl);
+                    getQRbtn.setVisibility(View.VISIBLE);
                     newLongShortDate = new LongShortDate(targetText, shortUrl);
                     //Check is this row exist in history
                     AddToDBAndUpdateList addToDBAndUpdateList = new AddToDBAndUpdateList();
@@ -292,6 +298,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     Toast.makeText(getApplicationContext(), R.string.error_occurred_message, Toast.LENGTH_LONG).show();
                     e.printStackTrace();
                     setResultTextView("");
+                    getQRbtn.setVisibility(View.GONE);
                 }
             }
 
@@ -315,6 +322,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 }
                 //Clear result text view
                 setResultTextView("");
+                getQRbtn.setVisibility(View.GONE);
             }
         });
     }
@@ -354,8 +362,11 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             qrWaitingTextView.setVisibility(View.GONE);
 
             dialog = new Dialog(MainActivity.this);
+            dialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
             dialog.setContentView(R.layout.qr);
             dialog.setCancelable(true);
+
+
             //dialog.setTitle("Your QR code");
             img = (ImageView) dialog.findViewById(R.id.imageViewQR);
             //img.setScaleType(ImageView.ScaleType.FIT_XY);
@@ -383,19 +394,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         }
     }
 
-    public boolean hasRows() {
-        boolean flag;
-        String queryString = "select exists(select 1 from " + DBHelper.TABLE_REQUEST_HISTORY + ");";
-        SQLiteDatabase database = dbHelper.getReadableDatabase();
-        Cursor cursor = database.rawQuery(queryString, null);
-        cursor.moveToFirst();
-        int count = cursor.getInt(0);
-        flag = count == 1;
-        cursor.close();
-        dbHelper.close();
-        return flag;
-    }
-
     //Fill out the list view on program start
     class FillListView extends AsyncTask<Void, Void, Void> {
         @Override
@@ -410,23 +408,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
         @Override
         protected Void doInBackground(Void... voids) {
-            SQLiteDatabase database = dbHelper.getReadableDatabase();
+            dbExecutor.getDataFromDB(longShortDateList);
 
-            //Read from DB
-            Cursor cursor = database.query(DBHelper.TABLE_REQUEST_HISTORY, null, null, null, null, null, null);
-            if (cursor.moveToLast()) {
-                int idIndex = cursor.getColumnIndex(DBHelper.KEY_ID);
-                int shortUrlIndex = cursor.getColumnIndex(DBHelper.KEY_SHORT_URL);
-                int longUrlIndex = cursor.getColumnIndex(DBHelper.KEY_ORIGINAL_URL);
-                int dateTimeIndex = cursor.getColumnIndex(DBHelper.KEY_TIMESTAMP);
-                do {
-                    LongShortDate longShortDate = new LongShortDate(cursor.getString(longUrlIndex), cursor.getString(shortUrlIndex),
-                            cursor.getString(dateTimeIndex), cursor.getInt(idIndex));
-                    longShortDateList.add(longShortDate);
-                } while (cursor.moveToPrevious());
-            }
-            cursor.close();
-            dbHelper.close();
             return null;
         }
 
@@ -456,16 +439,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
         @Override
         protected Void doInBackground(Void... voids) {
-            SQLiteDatabase database = dbHelper.getReadableDatabase();
-            //Read from DB
-            Cursor cursor = database.query(DBHelper.TABLE_REQUEST_HISTORY, null, null, null, null, null, null);
-            if (cursor.moveToLast()) {
-                int shortUrlIndex = cursor.getColumnIndex(DBHelper.KEY_SHORT_URL);
-                int longUrlIndex = cursor.getColumnIndex(DBHelper.KEY_ORIGINAL_URL);
-                lastLongShortDate = new LongShortDate(cursor.getString(longUrlIndex), cursor.getString(shortUrlIndex));
-            }
-            cursor.close();
-            dbHelper.close();
+            lastLongShortDate = dbExecutor.getLastLongShortDateFromDB();
             return null;
         }
 
@@ -475,69 +449,20 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             dialog.dismiss();
 
             if (lastLongShortDate == null) {
-                //rowsToBeRemoved.clear();
-                addFirstRowToDataBase();
+                dbExecutor.addFirstRowToDataBase(longShortDateList, newLongShortDate, getApplicationContext());
             } else if (!(lastLongShortDate.equals(newLongShortDate))) {
                 if (listView.getCheckedItemCount() > 0) {
                     rowsToBeRemoved.clear();
                     listView.clearChoices();
                     deleteBtn.setVisibility(View.GONE);
                 }
-                addToDataBase();
-                listAdapter.notifyDataSetChanged();
+                dbExecutor.addToDataBase(longShortDateList, newLongShortDate, getApplicationContext());
+
             }
+            listAdapter = new ListAdapter(MainActivity.this, R.layout.list_layout, longShortDateList);
+            listView.setAdapter(listAdapter);
+            listAdapter.notifyDataSetChanged();
         }
-    }
-
-    private void addToDataBase() {
-
-        String currentDateTimeString = DateFormat.getDateTimeInstance().format(new Date());
-        //Write to DB
-        SQLiteDatabase database = dbHelper.getWritableDatabase();
-        ContentValues contentValues = new ContentValues();
-        contentValues.put(DBHelper.KEY_SHORT_URL, shortUrl);
-        contentValues.put(DBHelper.KEY_ORIGINAL_URL, getTargetEditText());
-        contentValues.put(DBHelper.KEY_TIMESTAMP, currentDateTimeString);
-        database.insert(DBHelper.TABLE_REQUEST_HISTORY, null, contentValues);
-
-        //Update list with last position from DB
-        Cursor cursor = database.query(DBHelper.TABLE_REQUEST_HISTORY, null, null, null, null, null, null);
-        cursor.moveToLast();
-        int idIndex = cursor.getColumnIndex(DBHelper.KEY_ID);
-        int shortUrlIndex = cursor.getColumnIndex(DBHelper.KEY_SHORT_URL);
-        int longUrlIndex = cursor.getColumnIndex(DBHelper.KEY_ORIGINAL_URL);
-        int dateTimeIndex = cursor.getColumnIndex(DBHelper.KEY_TIMESTAMP);
-        LongShortDate longShortDate = new LongShortDate(cursor.getString(longUrlIndex), cursor.getString(shortUrlIndex),
-                cursor.getString(dateTimeIndex), cursor.getInt(idIndex));
-        cursor.close();
-        dbHelper.close();
-        longShortDateList.add(0, longShortDate);
-    }
-
-    private void addFirstRowToDataBase() {
-        String currentDateTimeString = DateFormat.getDateTimeInstance().format(new Date());
-        //Write to DB
-        SQLiteDatabase database = dbHelper.getWritableDatabase();
-        ContentValues contentValues = new ContentValues();
-        contentValues.put(DBHelper.KEY_SHORT_URL, shortUrl);
-        contentValues.put(DBHelper.KEY_ORIGINAL_URL, getTargetEditText());
-        contentValues.put(DBHelper.KEY_TIMESTAMP, currentDateTimeString);
-        database.insert(DBHelper.TABLE_REQUEST_HISTORY, null, contentValues);
-
-        //Update list with last position from DB
-        Cursor cursor = database.query(DBHelper.TABLE_REQUEST_HISTORY, null, null, null, null, null, null);
-        cursor.moveToLast();
-        int idIndex = cursor.getColumnIndex(DBHelper.KEY_ID);
-        int shortUrlIndex = cursor.getColumnIndex(DBHelper.KEY_SHORT_URL);
-        int longUrlIndex = cursor.getColumnIndex(DBHelper.KEY_ORIGINAL_URL);
-        int dateTimeIndex = cursor.getColumnIndex(DBHelper.KEY_TIMESTAMP);
-        LongShortDate longShortDate = new LongShortDate(cursor.getString(longUrlIndex), cursor.getString(shortUrlIndex),
-                cursor.getString(dateTimeIndex), cursor.getInt(idIndex));
-        longShortDateList.add(0, longShortDate);
-        listAdapter = new ListAdapter(MainActivity.this, R.layout.list_layout, longShortDateList);
-        listView.setAdapter(listAdapter);
-        cursor.close();
-        dbHelper.close();
     }
 
     protected void removeFromDBandFromList() {
@@ -548,14 +473,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
                     @Override
                     public void onClick(DialogInterface dialog, int whichButton) {
-
-                        SQLiteDatabase database = dbHelper.getWritableDatabase();
-                        for (int i = 0; i < rowsToBeRemoved.size(); i++) {
-                            int currentId = rowsToBeRemoved.get(i);
-                            longShortDateList.remove((Integer) currentId);
-                            database.delete(DBHelper.TABLE_REQUEST_HISTORY, DBHelper.KEY_ID + "=" + currentId, null);
-                        }
-                        dbHelper.close();
+                        dbExecutor.removeFromDB(longShortDateList, rowsToBeRemoved);
                         new FillListView().execute();
                         Toast.makeText(MainActivity.this, R.string.removed_from_history_message, Toast.LENGTH_SHORT).show();
                     }
